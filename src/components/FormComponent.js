@@ -2,11 +2,11 @@ import React from 'react'
 import Button from 'react'
 export default function FormComponent() {
 
-    const [skyBox1, setSkyBox1] = React.useState()
+    const [skyBox1, setSkyUrl1] = React.useState()
 
     const inputSkyBox1Change = (event) => {
         // console.log(event.target.value)
-        setSkyBox1(event.target.value)
+        setSkyUrl1(event.target.value)
     }
     const skyBox1OnClick = (event) => {
         event.preventDefault()

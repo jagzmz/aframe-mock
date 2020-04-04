@@ -88,6 +88,13 @@ export default function () {
             img.setAttribute('look-at', '#cam')
         }
     });
+    AFRAME.registerComponent('ttest', {
+        init: function () {
+            // this.el.addEventListener('animationcomplete', () => {
+            //     console.log('test animationcomplete')
+            // })
+        }
+    });
     AFRAME.registerComponent('ztoggle', {
         init: function () {
             // console.log("KLLKLK")

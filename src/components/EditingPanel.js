@@ -1,28 +1,76 @@
 import React, { useState, useEffect } from 'react'
 import { Input, Button, ListItem, ListItemText } from '@material-ui/core'
+import { makeStyles } from '@material-ui/core/styles';
+import InputLabel from '@material-ui/core/InputLabel';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+import NativeSelect from '@material-ui/core/NativeSelect';
 let markerSet = true
-
+let popperToggle = false
+const useStyles = makeStyles((theme) => ({
+    formControl: {
+        margin: theme.spacing(1),
+        minWidth: 120,
+    },
+    selectEmpty: {
+        marginTop: theme.spacing(2),
+    },
+    paper: {
+        border: '1px solid',
+        padding: theme.spacing(1),
+        backgroundColor: theme.palette.background.paper,
+    },
+}));
 export default function EditingPanel(props) {
-    const setSkyBox = props.setSkyBox
-    const setInfoGroups = props.setInfoGroups
-    const infoGroups = props.infoGroups
-    const [roomName, setRoomName] = useState('room1')
-    const [infoElId, setInfoElId] = useState(1)
-    const [infoMarkerName, setInfoMarkerName] = useState(`infoMarker${ infoElId }`)
-    const [idStruct, setIdStruct] = useState(`infogroup-infogroup-${ roomName }-${ infoMarkerName }`)
+
+
+    const classes = useStyles();
+
+    const entities = [
+        {
+            entityName: 'infogroup'
+        },
+        {
+            entityName: 'navigation'
+        }
+    ]
+
+    const [currentGroup, setCurrentGroup] = useState('infogroup')
+
+
+    const {
+        openPopper,
+        popperId,
+        anchorEl,
+        setAnchorEl,
+        roomName,
+        setRoomName,
+        setSkyUrl,
+        setInfoGroups,
+        infoGroups,
+        mediaUrl,
+        setMediaUrl,
+        description,
+        setDescription,
+        handleInfoSettingOpen
+    } = props
+    const [infoMarkerName, setInfoMarkerName] = useState(`infoMarker`)
+    const [idStruct, setIdStruct] = useState(`${ currentGroup }_${ currentGroup }-${ roomName }_${ infoMarkerName }`)
+    console.log(idStruct)
     const setLookControl = props.setLookControl
     let lookControl = props.lookControl
     const [markerInputHidden, setMarketInputHidden] = useState(true)
     const [markerXYZ, setMarkerXYZ] = useState({ x: 0, y: 0, z: 0 })
     let skyBoxUrl = ''
     const [infoMarkerList, setInfoMarkerList] = useState([])
-    console.log(setSkyBox)
+    console.log(setSkyUrl)
 
     useEffect(() => {
-        setInfoMarkerName(`infoMarker${ infoElId }`)
-        setRoomName(roomName)
-        setIdStruct(`infogroup-infogroup-${ roomName }-${ infoMarkerName }`)
-    }, [infoElId, roomName, infoMarkerName, setIdStruct])
+        // setInfoMarkerName(`infoMarker${ infoElId }`)
+        // setRoomName(roomName)
+        setIdStruct(`${ currentGroup }_${ currentGroup }-${ roomName }_${ infoMarkerName }`)
+    }, [roomName, infoMarkerName, setIdStruct, currentGroup])
 
     // const work = () => {
     //     const list = infoGroups.map((group) => {
@@ -38,7 +86,7 @@ export default function EditingPanel(props) {
 
     useEffect(() => {
     }, [infoMarkerList])
-
+    const [navigationTo, setNavigationTo] = useState(null)
     const onInputChange = (e, type) => {
         console.log(e.target.value, type)
 
@@ -48,6 +96,9 @@ export default function EditingPanel(props) {
         }
         else if (type === 'roomName') {
             setRoomName(e.target.value)
+        }
+        else if (type === 'infoMarkerName') {
+            setInfoMarkerName(e.target.value)
         }
         else if (type === 'markerXYZ') {
             setMarkerXYZ({ ...markerXYZ, [e.target.name]: e.target.value })
@@ -59,17 +110,40 @@ export default function EditingPanel(props) {
                 }
             })
         }
+        else if (type === 'group-selector') {
+            setCurrentGroup(e.target.value)
+            if (e.target.value === 'navigation') {
+                setNavigationTo(true)
+            }
+            else {
+                setNavigationTo(null)
+            }
+        }
+        else if (type === 'navigationTo') {
+            setNavigationTo(e.target.value)
+        }
 
     }
     console.log({ ...markerXYZ })
 
     const onAddClick = (e, type, data) => {
-        console.log(e, setSkyBox)
-        if (type === 'skyBox' && setSkyBox) {
-            setSkyBox(skyBoxUrl)
+        console.log(e, setSkyUrl)
+        if (type === 'skyBox' && setSkyUrl) {
+            setSkyUrl(skyBoxUrl)
         }
         else if (type === 'marker') {
+            let exists = false;
 
+            infoMarkerList.map(infoMarker => {
+                console.log(infoMarkerName, infoMarker.name)
+                if (infoMarker.name === infoMarkerName) {
+                    exists = true
+                }
+            })
+            console.log(exists)
+            if (exists) {
+                return
+            }
             // setMarketInputHidden(!markerInputHidden)
             // setInfoGroup({...infoGroups,})
             // setInfoGroups([
@@ -87,8 +161,12 @@ export default function EditingPanel(props) {
             setInfoGroups(infoGroups.map(group => {
                 if (group.name === 'temp') {
                     group.position = `${ markerXYZ.x } ${ markerXYZ.y } ${ markerXYZ.z }`
-                    // group.name = idStruct
-                    delete group['name']
+                    group.name = infoMarkerName
+                    group.type = currentGroup
+                    group.navigationTo = navigationTo
+                    // console.log(group)
+
+                    // delete group['name']
                 }
                 return group
             }))
@@ -100,6 +178,7 @@ export default function EditingPanel(props) {
             })
             setMarkerXYZ({ x: 0, y: 0, z: 0 })
             markerSet = !markerSet
+
             setInfoMarkerList([...infoMarkerList, {
 
                 name: infoMarkerName,
@@ -107,7 +186,7 @@ export default function EditingPanel(props) {
 
             }])
 
-            setInfoElId(infoElId + 1)
+            // setInfoElId(infoElId + 1)
 
         }
         else if (type === 'look-control') {
@@ -116,6 +195,19 @@ export default function EditingPanel(props) {
         }
         else if (type === 'insert') {
             // console.log(idStruct)
+            let exists = false;
+
+            infoMarkerList.map(infoMarker => {
+                console.log(infoMarkerName, infoMarker.name)
+                if (infoMarker.name === infoMarkerName) {
+                    exists = true
+                }
+            })
+            console.log(exists)
+            if (exists) {
+                return
+            }
+
             console.log('insert', markerSet)
             if (!markerSet) {
                 return
@@ -124,10 +216,15 @@ export default function EditingPanel(props) {
             setInfoGroups([
                 ...infoGroups,
                 {
+                    onClick: (e) => {
+                        editingIconOnClick({
+                            idStruct
+                        })
+                    },
                     'look-at': '#cam',
                     'visible': true,
                     'position': '0 1.6 -4',
-                    'scale': '0.5 0.5 1',
+                    'scale': '0.7 0.7 1',
                     'name': 'temp',
                     'id': `${ idStruct }`,
                     'src': 'https://img.icons8.com/doodle/96/000000/up-direction-arrow.png'
@@ -141,12 +238,24 @@ export default function EditingPanel(props) {
             })
         }
     }
+    const editingIconOnClick = (e) => {
+        const currentTarget = document.getElementById(e.idStruct)
+        setAnchorEl(popperToggle ? null : currentTarget);
+        popperToggle = !popperToggle
+        handleInfoSettingOpen(currentTarget)
+        console.log(currentTarget)
+        // console.log(e)
+    }
+    const onPopperSave = (currentTarget) => {
+
+    }
     function ListItemLink(props) {
         return <ListItem button component="a" {...props} />;
     }
 
     return (
         <div className='editingPanel'>
+
             {/* <Button onClick={e => onAddClick(e, 'look-control')} variant="contained" color='primary'>Enable look-control</Button> */}
             <Input placeholder='roomName' value={roomName} onChange={e => { onInputChange(e, 'roomName') }} ></Input>
             <Input placeholder='skyBox url' onChange={e => onInputChange(e, 'skyBoxUrl')}></Input>
@@ -161,7 +270,30 @@ export default function EditingPanel(props) {
                     )
                 })
             }
+            <FormControl className={classes.formControl}>
+                <InputLabel htmlFor="age-native-simple">Group</InputLabel>
+                <Select
+                    native
+                    value={currentGroup}
+                    onChange={e => onInputChange(e, 'group-selector')}
+                    inputProps={{
+                        name: 'Group',
+                        id: 'group-selector',
+                    }}
+                >
+                    {
+                        entities.map(item => (
+                            <option value={item.entityName}>{item.entityName}</option>
+                        ))
+                    }
+                </Select>
+            </FormControl>
+            {
+                navigationTo &&
+                <Input placeholder='navigationTo' value={navigationTo === true ? '' : navigationTo} onChange={e => onInputChange(e, 'navigationTo')}></Input>
 
+            }
+            <Input placeholder='markerName' value={infoMarkerName} onChange={e => onInputChange(e, 'infoMarkerName')}></Input>
             <Input placeholder='pos x' name='x' value={markerXYZ.x} onChange={e => onInputChange(e, 'markerXYZ')}></Input>
             <Input placeholder='pos y' name='y' value={markerXYZ.y} onChange={e => onInputChange(e, 'markerXYZ')}></Input>
             <Input placeholder='pos z' name='z' value={markerXYZ.z} onChange={e => onInputChange(e, 'markerXYZ')}></Input>
